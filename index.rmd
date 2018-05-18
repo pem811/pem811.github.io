@@ -186,14 +186,45 @@ violence_map <- na.omit(violence_trimmed)
 
 markermap <- leaflet(violence_map) %>%
   addTiles() %>%
-  addAwesomeMarkers(~{as.numeric(unlist(violence_map%>%filter(date==2013)%>%select(longitude)))},
+  addCircleMarkers(~{as.numeric(unlist(violence_map%>%filter(date==2013)%>%select(longitude)))},
                     ~{as.numeric(unlist(violence_map%>%filter(date==2013)%>%select(latitude)))}, 
-                    icon=awesomeIcons(
-                      icon = 'ios-close',
-                      iconColor = 'black',
-                      library = 'ion',
-                      markerColor = 'red'
-                    )                    )
+                    radius = 2, 
+                    color = 'red',
+                    group="2013")%>%
+  addCircleMarkers(~{as.numeric(unlist(violence_map%>%filter(date==2014)%>%select(longitude)))},
+                    ~{as.numeric(unlist(violence_map%>%filter(date==2014)%>%select(latitude)))}, 
+                    radius = 2, 
+                    color = 'orange',
+                    group="2014") %>%
+  addCircleMarkers(~{as.numeric(unlist(violence_map%>%filter(date==2015)%>%select(longitude)))},
+                    ~{as.numeric(unlist(violence_map%>%filter(date==2015)%>%select(latitude)))}, 
+                    radius = 2, 
+                    color = 'green',
+                    group="2015") %>%
+  addCircleMarkers(~{as.numeric(unlist(violence_map%>%filter(date==2016)%>%select(longitude)))},
+                    ~{as.numeric(unlist(violence_map%>%filter(date==2016)%>%select(latitude)))}, 
+                    radius = 2, 
+                    color = 'blue',
+                    group="2016") %>%
+  addCircleMarkers(~{as.numeric(unlist(violence_map%>%filter(date==2017)%>%select(longitude)))},
+                    ~{as.numeric(unlist(violence_map%>%filter(date==2017)%>%select(latitude)))}, 
+                    radius = 2, 
+                    color = 'purple',
+                    group="2017") %>%
+  addCircleMarkers(~{as.numeric(unlist(violence_map%>%filter(date==2018)%>%select(longitude)))},
+                    ~{as.numeric(unlist(violence_map%>%filter(date==2018)%>%select(latitude)))}, 
+                    radius = 2, 
+                    color = 'black',
+                    group="2018") %>%
+  addLayersControl(
+    overlayGroups = c("2013", "2014", "2015", "2016", "2017", "2018"),
+    options = layersControlOptions(collapsed = FALSE)
+  ) %>% 
+  hideGroup("2014") %>%
+  hideGroup("2015") %>%
+  hideGroup("2016") %>%
+  hideGroup("2017") %>%
+  hideGroup("2018") 
 
 markermap
 
@@ -202,3 +233,16 @@ markermap
 
 
 You can find more about the leaflet [here](https://rstudio.github.io/leaflet/).  
+
+
+
+
+
+
+
+
+
+
+
+
+
