@@ -173,6 +173,14 @@ head(violence_trimmed)
 This dataset is really cool and I regret chopping out this much data. I am sure someone particularly motivated could do some really cool stuff with all the data this thing has. If you haven't looked more closely at it yet, do so!
 
 
+Finally, you'll notice that the cats_full dataset has two attributes in one column. We need to split this. 
+```{r catsplit}
+extract(cats_full, 'Category/Subcategory', into = c("category", "subcategory"), '(.+)([A-Z].+)' )
+
+```
+
+This uses [Regex](https://stat.ethz.ch/R-manual/R-devel/library/base/html/regex.html) to separate the column into two different columns based on the capital letter. 
+
 ## Distraction #1: Mapping Data
 Because we are taking so long to get to our final data, and because we now have a hyper cool dataset with latitude and longitude, we are going to make cool maps! Hooray!  
 
