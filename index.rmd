@@ -20,12 +20,29 @@ As a final thought, I wrote the preceding without doing any data analysis, so I 
 
 We will be doing this project in the language R in the RStudio. You can download RStudio [here](https://www.rstudio.com/products/rstudio/download/). If you want to get some more background information on R and RStudio, visit [this page](https://support.rstudio.com/hc/en-us/articles/201141096-Getting-Started-with-R), which has links to various resources for familiarizing yourself with R. I will try to be very thorough here too, however. 
 
-Once you have R installed and have familiarized yourself with it to the the extent you desire, sign up for a Kaggle account (I used my burner Google account and it was quite easy) and download the [Kaggle data set](https://www.kaggle.com/jameslko/gun-violence-data) and the [data set on gun laws](https://www.statefirearmlaws.org/table.html) as CSV files (the Kaggle will download as a zipped folder with a CSV in it, you have to choose CSV from a list of options for the other data). You can open these files in Microsoft Excell or another spreadsheet program to inspect the data or look at the raw information in a text editor to get a feel for what R will actually be seeing. 
+Once you have R installed and have familiarized yourself with it to the the extent you desire, sign up for a Kaggle account (I used my burner Google account and it was quite easy) and download the [Kaggle data set](https://www.kaggle.com/jameslko/gun-violence-data) and the [data set on gun laws](https://www.statefirearmlaws.org/table.html) as CSV files (the Kaggle will download as a zipped folder with a CSV in it, you have to choose CSV from a list of options for the other data). You can open these files in Microsoft Excell or another spreadsheet program to inspect the data or look at the raw information in a text editor to get a feel for what R will actually be seeing.  
 
+Once you have RStudio open, got to File->New Project and create a directory for this project. This is what I will call the project's home directory, and all associated files for the project should be put in this folder. 
 
 
 ##Data Curation 
 
+We will load in the CSV for the Kaggle gun violence data first. If you haven't already put the CSV in the project's home directory, do so. 
+
+```{r load_violence}
+#This library has everything and is fantastic, I've used it for 
+#every R project I've done
+library(tidyverse)
+
+#Pulls the data form our CSV and stores it as R's 
+#data structure, a data frame
+violence_full <- read.csv("gun-violence-data_01-2013_03-2018.csv")
+
+
+#this pipeline selects the 
+violence_full %>% select(1:5)%>%head()
+```
+As a note, all code will be commented with a max of two , and if I want to expound on my notes I will do it after the code
 
 https://www.kaggle.com/jameslko/gun-violence-data/data
 

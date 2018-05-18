@@ -135,9 +135,44 @@ $(document).ready(function () {
 <h2>Getting Started</h2>
 <p>We will be doing this project in the language R in the RStudio. You can download RStudio <a href="https://www.rstudio.com/products/rstudio/download/">here</a>. If you want to get some more background information on R and RStudio, visit <a href="https://support.rstudio.com/hc/en-us/articles/201141096-Getting-Started-with-R">this page</a>, which has links to various resources for familiarizing yourself with R. I will try to be very thorough here too, however.</p>
 <p>Once you have R installed and have familiarized yourself with it to the the extent you desire, sign up for a Kaggle account (I used my burner Google account and it was quite easy) and download the <a href="https://www.kaggle.com/jameslko/gun-violence-data">Kaggle data set</a> and the <a href="https://www.statefirearmlaws.org/table.html">data set on gun laws</a> as CSV files (the Kaggle will download as a zipped folder with a CSV in it, you have to choose CSV from a list of options for the other data). You can open these files in Microsoft Excell or another spreadsheet program to inspect the data or look at the raw information in a text editor to get a feel for what R will actually be seeing.</p>
+<p>Once you have RStudio open, got to File-&gt;New Project and create a directory for this project. This is what I will call the project’s home directory, and all associated files for the project should be put in this folder.</p>
 </div>
 <div id="data-curation" class="section level2">
 <h2>Data Curation</h2>
+<p>We will load in the CSV for the Kaggle gun violence data first. If you haven’t already put the CSV in the project’s home directory, do so.</p>
+<pre class="r"><code>#This library has everything and is fantastic, I've used it for 
+#every R project I've done
+library(tidyverse)</code></pre>
+<pre><code>## -- Attaching packages --------------------------------------- tidyverse 1.2.1 --</code></pre>
+<pre><code>## v ggplot2 2.2.1     v purrr   0.2.4
+## v tibble  1.4.2     v dplyr   0.7.4
+## v tidyr   0.8.0     v stringr 1.3.0
+## v readr   1.1.1     v forcats 0.3.0</code></pre>
+<pre><code>## -- Conflicts ------------------------------------------ tidyverse_conflicts() --
+## x dplyr::filter() masks stats::filter()
+## x dplyr::lag()    masks stats::lag()</code></pre>
+<pre class="r"><code>#Pulls the data form our CSV and stores it as R's 
+#data structure, a data frame
+violence_full &lt;- read.csv(&quot;gun-violence-data_01-2013_03-2018.csv&quot;)
+
+
+#this pipeline selects the 
+violence_full %&gt;% select(1:5)%&gt;%head()</code></pre>
+<pre><code>##   incident_id       date          state city_or_county
+## 1      461105 2013-01-01   Pennsylvania     Mckeesport
+## 2      460726 2013-01-01     California      Hawthorne
+## 3      478855 2013-01-01           Ohio         Lorain
+## 4      478925 2013-01-05       Colorado         Aurora
+## 5      478959 2013-01-07 North Carolina     Greensboro
+## 6      478948 2013-01-07       Oklahoma          Tulsa
+##                                     address
+## 1 1506 Versailles Avenue and Coursin Street
+## 2              13500 block of Cerise Avenue
+## 3                     1776 East 28th Street
+## 4          16000 block of East Ithaca Place
+## 5                 307 Mourning Dove Terrace
+## 6                6000 block of South Owasso</code></pre>
+<p>As a note, all code will be commented with a max of two , and if I want to expound on my notes I will do it after the code</p>
 <p><a href="https://www.kaggle.com/jameslko/gun-violence-data/data" class="uri">https://www.kaggle.com/jameslko/gun-violence-data/data</a></p>
 <p><a href="https://www.statefirearmlaws.org/glossary.html" class="uri">https://www.statefirearmlaws.org/glossary.html</a></p>
 <p><a href="https://www.statefirearmlaws.org/table.html" class="uri">https://www.statefirearmlaws.org/table.html</a></p>
