@@ -175,7 +175,7 @@ violence_full %&gt;% select(1:5)%&gt;%head()</code></pre>
 ## 6                6000 block of South Owasso</code></pre>
 <p>As a note, all code will be commented with a max of two lines, and if I want to expound on my notes I will do it after the code block.</p>
 <p>For example, the last line is what is called a pipeline. The ‘%&gt;%’ operator takes the result of the thing in front of it and passes it as the first argument of the thing behind it. These pipes usually start with a dataset, in this case violence_full. Select picks columns, and this range means columns 1-5 inclusive. Head selects the first few rows of a dataset. If a line does nothing but create a value or mention a value without storing it, that value is printed.</p>
-<p>Now we will add the <a href="https://www.statefirearmlaws.org/table.html">data set on gun laws</a> and the <a href="https://www.census.gov/data/datasets/2017/demo/popest/state-total.html">census dataset</a>. The government wasn’t kind enough to provide us with a CSV, so we will have to do a slightly different proceidure for the .xlsx file they do provide.</p>
+<p>Now we will add the <a href="https://www.statefirearmlaws.org/table.html">data set on gun laws</a> and the <a href="https://www2.census.gov/programs-surveys/popest/tables/2010-2017/state/totals/nst-est2017-01.xlsx">census dataset</a>. The government wasn’t kind enough to provide us with a CSV, so we will have to do a slightly different proceidure for the .xlsx file they do provide.</p>
 <pre class="r"><code>#Pulls the data form our CSV and stores it as R's 
 #data structure, a data frame
 gunlaws_full &lt;- read.csv(&quot;raw_data.csv&quot;)

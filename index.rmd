@@ -48,7 +48,7 @@ As a note, all code will be commented with a max of two lines, and if I want to 
 
 For example, the last line is what is called a pipeline. The '%>%' operator takes the result of the thing in front of it and passes it as the first argument of the thing behind it. These pipes usually start with a dataset, in this case violence_full. Select picks columns, and this range means columns 1-5 inclusive. Head selects the first few rows of a dataset. If a line does nothing but create a value or mention a value without storing it, that value is printed. 
 
-Now we will add the [data set on gun laws](https://www.statefirearmlaws.org/table.html) and the [census dataset](https://www.census.gov/data/datasets/2017/demo/popest/state-total.html). The government wasn't kind enough to provide us with a CSV, so we will have to do a slightly different proceidure for the .xlsx file they do provide. 
+Now we will add the [data set on gun laws](https://www.statefirearmlaws.org/table.html) and the [census dataset](https://www2.census.gov/programs-surveys/popest/tables/2010-2017/state/totals/nst-est2017-01.xlsx). The government wasn't kind enough to provide us with a CSV, so we will have to do a slightly different procedure for the .xlsx file they do provide. 
 
 
 ```{r load_gunlaws_population}
@@ -71,6 +71,25 @@ pops_full <- read.xlsx("nst-est2017-01.xlsx", 1)
 pops_full %>% select(1:5)%>%head()
 ```
 
-You will note that the datafram for pops_full has a lot of junk in it. If you open it and in Excell and compare it to the 
+You will note that the dataframe for pops_full has a lot of junk in it. If you open it and the CSV for gun laws in Excell and compare them, you will notice that the .xlsx contains a lot more data than the gun laws CSV, and that most of this data will not be needed. We'll deal with that in a bit. 
+
+If you want more information about reading in weird datafiles, check out [this link](https://www.statmethods.net/input/importingdata.html).  
+
+If you look at the website for the [categories](https://www.statefirearmlaws.org/glossary.html), you'll notice that there is no option to download the data. We will have to [scrape](https://www.analyticsvidhya.com/blog/2017/03/beginners-guide-on-web-scraping-in-r-using-rvest-with-hands-on-knowledge/) it. As outlined in that link, we will have to tell R what sort of element it is looking for to collect the data from. 
+
+```{r scrape_cats}
+#the library for scraping
+library(rvest)
+
+webpage <- read_html("https://www.spaceweatherlive.com/en/solar-activity/top-50-solar-flares")
+
+swl_tab <- webpage %>%
+  html_nodes(".table.table-striped") %>%
+  .[[1]] %>%
+  html_table(fill = TRUE) 
+
+swl_tab
+ 
+```
 
 
