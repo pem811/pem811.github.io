@@ -1,5 +1,5 @@
 ---
-title: "Writeup for Final Project "
+title: "Final Project: The effect of Firearm Regulations"
 author: "Paul Motter"
 date: "May 12, 2018"
 output: html_document
@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
-Thanks to my Data Science Professor Hector Corida Bravo and his [notes](http://www.hcbravo.org/IntroDataSci/bookdown-notes/). These helped me immensily for this project. 
+Thanks to my Data Science Professor Hector Corida Bravo and his [notes](http://www.hcbravo.org/IntroDataSci/bookdown-notes/). These helped me immensely for this project. 
 
 Also, please forgive my creative spelling. I grew up with spellcheck, and RStudio is running slow enough _without_ an extra pugin running. 
 
@@ -252,7 +252,7 @@ You can find more about the leaflet [here](https://rstudio.github.io/leaflet/).
 
 
 
-## Analysis
+## Analisys
 
 Here, we are going to finally answer the question of whether or not regulation has an impact on gun violence (in our somewhat flawed, generalized way). We are, unfortunatly, going to have to modify some data sets some more. gunlaws_full already has a total_laws column, so we don't have to do any more processing on that beyond slicing out all of the middle rows. Population is already mostly ready from the work above. Turns out, though, that we have to remove DC from population because the gun laws dataset doesn't include DC and remove all years except 2014-2017 inclusive becuase of the violence dataset.   
 
@@ -429,6 +429,9 @@ head(final_df)
 
 ```
 
+(Ok yes much of this is adapted from a homework. However, it still applies here.)
+
+
 In the code above, two matricies are produced that are offset (ex. matrix_1 does not include the first quarter). This way, when one is suptracted from the other, a matrix of differences in affordability will be produced. This is then joined back with the states and true directions from the 2016-2017 data, which will be used to test the models' training against.   
 
 Now that we have a dataframe of differences, we need to run our k-fold cross validation on it. I have arbitrarily picked k=5. 
@@ -557,8 +560,10 @@ Again, this is meant as a framework: once you have it you can plug your better d
 
 ## Conclusion
 
+Back to all that regression stuff...  
+
 At the end of the day, we were able to reject the null hypothesis that the slope of a linear regression line between the number of firearm regulations and firearm violence was zero. The new slope is slightly negative, which would please the people in the first, pro-regulation camp. However, the data set has many problems with the preconditions for regression that this line is not very trustworty, and we are still in the dark, beholden to the sensationalist media.  
 
-Along the way, we learned how to import data from CSV and .xlsx, tidy the data, represent data on an interactive graph, a little Machine Learning (it I get that done in time), and some linear regression. I know I said that we would use the data from that table we scraped to add weights to gun laws we found especially important, but I ran out of time for that. We did get to scrape that dataset though, which is a good skill to know. 
+Along the way, we learned how to import data from CSV and .xlsx, tidy the data, represent data on an interactive graph, a little Machine Learning, and some linear regression. I know I said that we would use the data from that table we scraped to add weights to gun laws we found especially important, but I ran out of time for that. We did get to scrape that dataset though, which is a good skill to know. 
 
 Thank you, have a good summer, and tell the Professor to give credit to his sources!
