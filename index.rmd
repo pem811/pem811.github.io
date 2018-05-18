@@ -11,7 +11,9 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ##Introduction
 
-A popular source of argument among friends, enemies, frenemies, and family members (which could be in any of the previous categories) is the state of gun ownership and gun violence in the United States today. I know I have (cordially of course) discussed this issue a fair bit, especially after the Vegas and Parkland shootings. A common train of disagreement that tends to come from these conversations is the issue of regulation. Some people associated with a particular political leaning argue that more regulation leads to fewer guns which leads to less gun violence. Other people with the opposite political inclination argue that the regulations would only be followed by people who wouldn't be committing gun crimes anyway, and the regulations would just give wrongdoers more incentive to do wrong without the fear of an armed bystander. However, rather than presenting unbiased information to the public, news sources have decided to join one side of the argument or the other to make more money. On the regulation-is-good side of the argument (henceforth referred to as pro-regulation), there is [this article](https://www.theatlantic.com/politics/archive/2015/08/the-states-with-the-most-gun-laws-see-the-fewest-gun-related-deaths/448044/) and [this more scholarly article from Stanford](https://news.stanford.edu/2017/12/07/new-study-analyzes-recent-gun-violence-research/). On the other, regulation-is-bad side of the argument (henceforth the anti-regulation stance) is [this article](http://insider.foxnews.com/2018/03/28/chicago-murder-rate-sky-high-despite-strict-gun-control-laws). Because, as mentioned before, news is sensationalist and we can't believe anything they say, we will do the data ourselves. We will be getting our information on gun crime from [this Kaggle data set](https://www.kaggle.com/jameslko/gun-violence-data) and cross referencing it with [this data set on gun laws](https://www.statefirearmlaws.org/table.html). We will play with weights based on issues that matter to us using [this supporting table](https://www.statefirearmlaws.org/glossary.html). Finally, we will adjust our gun crime rates for population using a [dataset](https://www.census.gov/data/datasets/2017/demo/popest/state-total.html) from the census bureau. After we store this data in R and make it pretty and clean, we will visualize it with multiple charts, perform some regression work, and even use ML to predict future gun violence rates. Of course, I don't know where this data came from exactly, it could come from people who are as bad as the news sources. Also, we must understand that there are several factors at work in an issue like this one, and just because a correlation was found doesn't mean there is causation. 
+A popular source of argument among friends, enemies, frenemies, and family members (which could be in any of the previous categories) is the state of gun ownership and gun violence in the United States today. I know I have (cordially of course) discussed this issue a fair bit, especially after the Vegas and Parkland shootings. A common train of disagreement that tends to come from these conversations is the issue of regulation. Some people associated with a particular political leaning argue that more regulation leads to fewer guns which leads to less gun violence. Other people with the opposite political inclination argue that the regulations would only be followed by people who wouldn't be committing gun crimes anyway, and the regulations would just give wrongdoers more incentive to do wrong without the fear of an armed bystander. However, rather than presenting unbiased information to the public, news sources have decided to join one side of the argument or the other and sensationalize the issues to make more money. On the regulation-is-good side of the argument (henceforth referred to as pro-regulation), there is [this article](https://www.theatlantic.com/politics/archive/2015/08/the-states-with-the-most-gun-laws-see-the-fewest-gun-related-deaths/448044/) and [this more scholarly article from Stanford](https://news.stanford.edu/2017/12/07/new-study-analyzes-recent-gun-violence-research/). On the other, regulation-is-bad side of the argument (henceforth the anti-regulation stance) is [this article](http://insider.foxnews.com/2018/03/28/chicago-murder-rate-sky-high-despite-strict-gun-control-laws). Because, as mentioned before, news is sensationalist and we can't believe anything they say, we will do the data ourselves. We will be getting our information on gun crime from [this Kaggle data set](https://www.kaggle.com/jameslko/gun-violence-data) and cross referencing it with [this data set on gun laws](https://www.statefirearmlaws.org/table.html). We will play with weights based on issues that matter to us using [this supporting table](https://www.statefirearmlaws.org/glossary.html). Finally, we will adjust our gun crime rates for population using a [dataset](https://www.census.gov/data/datasets/2017/demo/popest/state-total.html) from the census bureau. After we store this data in R and make it pretty and clean, we will visualize it with multiple charts, perform some regression work, and even use ML to predict future gun violence rates. Of course, I don't know where this data came from exactly, it could come from people who are as bad as the news sources. Also, we must understand that there are several factors at work in an issue like this one, and just because a correlation was found doesn't mean there is causation.   
+
+In terms of hypothesis testing, our null hypothesis is that there is no relation between gun violence and gun regulation, and our alternative hypothesis is that there is a relation between gun violence and gun regulation. More general hypothesis test information can be found [here](http://www.statisticshowto.com/probability-and-statistics/hypothesis-testing/). 
 
 As a final thought, I wrote the preceding without doing any data analysis, so I will be just as surprised by the results of these procedures when I finish running them as you will be when you read this for the first time!
 
@@ -20,7 +22,7 @@ As a final thought, I wrote the preceding without doing any data analysis, so I 
 
 We will be doing this project in the language R in the RStudio. You can download RStudio [here](https://www.rstudio.com/products/rstudio/download/). If you want to get some more background information on R and RStudio, visit [this page](https://support.rstudio.com/hc/en-us/articles/201141096-Getting-Started-with-R), which has links to various resources for familiarizing yourself with R. I will try to be very thorough here too, however. 
 
-Once you have R installed and have familiarized yourself with it to the the extent you desire, sign up for a Kaggle account (I used my burner Google account and it was quite easy) and download the [Kaggle data set](https://www.kaggle.com/jameslko/gun-violence-data) and the [data set on gun laws](https://www.statefirearmlaws.org/table.html) as CSV files (the Kaggle will download as a zipped folder with a CSV in it, you have to choose CSV from a list of options for the other data). You can open these files in Microsoft Excell or another spreadsheet program to inspect the data or look at the raw information in a text editor to get a feel for what R will actually be seeing.  
+Once you have R installed and have familiarized yourself with it to the extent you desire, sign up for a Kaggle account (I used my burner Google account and it was quite easy) and download the [Kaggle data set](https://www.kaggle.com/jameslko/gun-violence-data) and the [data set on gun laws](https://www.statefirearmlaws.org/table.html) as CSV files (the Kaggle will download as a zipped folder with a CSV in it, you have to choose CSV from a list of options for the other data). You can open these files in Microsoft Excell or another spreadsheet program to inspect the data or look at the raw information in a text editor to get a feel for what R will actually be seeing.  
 
 Once you have RStudio open, got to File->New Project and create a directory for this project. This is what I will call the project's home directory, and all associated files for the project should be put in this folder. 
 
@@ -38,32 +40,37 @@ library(tidyverse)
 #data structure, a data frame
 violence_full <- read.csv("gun-violence-data_01-2013_03-2018.csv")
 
-
-#this pipeline selects the 
+#this pipeline selects the first five colums and the
+#first six rows of the dataset and prints. 
 violence_full %>% select(1:5)%>%head()
 ```
-As a note, all code will be commented with a max of two , and if I want to expound on my notes I will do it after the code
+As a note, all code will be commented with a max of two lines, and if I want to expound on my notes I will do it after the code block. 
 
-https://www.kaggle.com/jameslko/gun-violence-data/data
+For example, the last line is what is called a pipeline. The '%>%' operator takes the result of the thing in front of it and passes it as the first argument of the thing behind it. These pipes usually start with a dataset, in this case violence_full. Select picks columns, and this range means columns 1-5 inclusive. Head selects the first few rows of a dataset. If a line does nothing but create a value or mention a value without storing it, that value is printed. 
 
-https://www.statefirearmlaws.org/glossary.html 
-
-https://www.statefirearmlaws.org/table.html
-
-Found some stuff
+Now we will add the [data set on gun laws](https://www.statefirearmlaws.org/table.html) and the [census dataset](https://www.census.gov/data/datasets/2017/demo/popest/state-total.html). The government wasn't kind enough to provide us with a CSV, so we will have to do a slightly different proceidure for the .xlsx file they do provide. 
 
 
+```{r load_gunlaws_population}
+#Pulls the data form our CSV and stores it as R's 
+#data structure, a data frame
+gunlaws_full <- read.csv("raw_data.csv")
 
-```{r cars}
-summary(cars)
+
+#this pipeline selects the first five colums and the
+#first six rows of the dataset and prints. 
+gunlaws_full %>% select(1:5)%>%head()
+
+#library for reading .xlsx
+library(xlsx)
+
+#the second argument in read.xlsx is the sheet index
+#it can also be the sheet name
+pops_full <- read.xlsx("nst-est2017-01.xlsx", 1)
+
+pops_full %>% select(1:5)%>%head()
 ```
 
-## Including Plots
+You will note that the datafram for pops_full has a lot of junk in it. If you open it and in Excell and compare it to the 
 
-You can also embed plots, for example:
 
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

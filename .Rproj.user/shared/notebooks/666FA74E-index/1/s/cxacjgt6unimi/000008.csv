@@ -1,3 +1,0 @@
-"0","library(tidyverse)"
-"0","violence_full <- read.csv(""gun-violence-data_01-2013_03-2018.csv"")"
-"0","head(violence_full)"
