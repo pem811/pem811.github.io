@@ -9,6 +9,9 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+
+Thanks to my Data Science Professor Hector Corida Bravo and his [notes](http://www.hcbravo.org/IntroDataSci/bookdown-notes/). These helped me immensily for this project. 
+
 ##Introduction
 
 A popular source of argument among friends, enemies, frenemies, and family members (which could be in any of the previous categories) is the state of gun ownership and gun violence in the United States today. I know I have (cordially of course) discussed this issue a fair bit, especially after the Vegas and Parkland shootings. A common train of disagreement that tends to come from these conversations is the issue of regulation. Some people associated with a particular political leaning argue that more regulation leads to fewer guns which leads to less gun violence. Other people with the opposite political inclination argue that the regulations would only be followed by people who wouldn't be committing gun crimes anyway, and the regulations would just give wrongdoers more incentive to do wrong without the fear of an armed bystander. However, rather than presenting unbiased information to the public, news sources have decided to join one side of the argument or the other and sensationalize the issues to make more money. On the regulation-is-good side of the argument (henceforth referred to as pro-regulation), there is [this article](https://www.theatlantic.com/politics/archive/2015/08/the-states-with-the-most-gun-laws-see-the-fewest-gun-related-deaths/448044/) and [this more scholarly article from Stanford](https://news.stanford.edu/2017/12/07/new-study-analyzes-recent-gun-violence-research/). On the other, regulation-is-bad side of the argument (henceforth the anti-regulation stance) is [this article](http://insider.foxnews.com/2018/03/28/chicago-murder-rate-sky-high-despite-strict-gun-control-laws). Because, as mentioned before, news is sensationalist and we can't believe anything they say, we will do the data ourselves. We will be getting our information on gun crime from [this Kaggle data set](https://www.kaggle.com/jameslko/gun-violence-data) and cross referencing it with [this data set on gun laws](https://www.statefirearmlaws.org/table.html). We will play with weights based on issues that matter to us using [this supporting table](https://www.statefirearmlaws.org/glossary.html). Finally, we will adjust our gun crime rates for population using a [dataset](https://www.census.gov/data/datasets/2017/demo/popest/state-total.html) from the census bureau. After we store this data in R and make it pretty and clean, we will visualize it with multiple charts, perform some regression work, and even use ML to predict future gun violence rates. Of course, I don't know where this data came from exactly, it could come from people who are as bad as the news sources. Also, we must understand that there are several factors at work in an issue like this one, and just because a correlation was found doesn't mean there is causation.   
@@ -47,6 +50,8 @@ violence_full %>% select(1:5)%>%head()
 As a note, all code will be commented with a max of two lines, and if I want to expound on my notes I will do it after the code block. 
 
 For example, the last line is what is called a pipeline. The '%>%' operator takes the result of the thing in front of it and passes it as the first argument of the thing behind it. These pipes usually start with a dataset, in this case violence_full. Select picks columns, and this range means columns 1-5 inclusive. Head selects the first few rows of a dataset. If a line does nothing but create a value or mention a value without storing it, that value is printed. 
+
+Also, if you have not already installed a library, go to the packages tab (by default in the bottom right pane in RStudio), click the "install" button, type in the name of the package you are looking for, and click "Install."
 
 Now we will add the [data set on gun laws](https://www.statefirearmlaws.org/table.html) and the [census dataset](https://www2.census.gov/programs-surveys/popest/tables/2010-2017/state/totals/nst-est2017-01.xlsx). The government wasn't kind enough to provide us with a CSV, so we will have to do a slightly different procedure for the .xlsx file they do provide. 
 
@@ -119,12 +124,18 @@ pops_trimmed <- pops_full %>%
   slice(-(1:8)) %>%
   #removes last 6 entities
   slice(-(52:58) ) %>%
-  #change the column names
+  #change the column names (temporarily for ease of use)
   #the ticks let us use code we wouldn't usually put in a pipeline
   `colnames<-`(c("State", "2010", "2011", "2012", "2013", 
                  "2014", "2015", "2016", "2017")) %>%
+  #remove the first character in the string for State
   mutate(State = str_sub(State, 2, 25)) %>%
-  transform(`2010` = as.double(as.character(`2010`)))
+  #change 2010 (ticks because its a number) to numeric data
+  transform(`2010` = as.double(as.character(`2010`))) %>%
+  #change the column names (again...)
+  #try without this to see what happens.
+  `colnames<-`(c("State", "2010", "2011", "2012", "2013", 
+                 "2014", "2015", "2016", "2017"))
   
   
 
@@ -137,6 +148,57 @@ You will notice that I changed the state names to remove the periods, changed th
 However, we're not done. We want to be able to join the violence dataset to this based on year and state eventually. This dataset as it stands is not very condusive to this, it would be better if there was a separate attribute for each state in each year. This also plays into the idea of [tidy data](https://vita.had.co.nz/papers/tidy-data.pdf) (incidentally, this seems to be the paper Professor Bravo used for his class notes--might want to cite this Professor). 
 
 ```{r tidy_pops}
-
+#gather(dataset, what attribute names turns into, what the data turns into, 
+# what not to include)
+pops_tidy <- gather(pops_trimmed, year, population, -State)
+head(pops_tidy)
 
 ```
+
+Also, the violence_full dataset has more attributes than we need, and the date attribute is not seen by R as a date. To use it effectivly as a date, we would have to "date" attribute to a _date_ attribute. This involves some [fanciness](http://r4ds.had.co.nz/dates-and-times.html), and we really don't need the full date for this project, so we won't bother. We will create a year attribute for use when joining with the population data for analysis instead. 
+
+
+```{r trim_violence}
+
+violence_trimmed <- violence_full %>%
+  #select the 4 attributes we want
+  select(date, state, n_killed, n_injured, longitude, latitude) %>%
+  mutate(date = str_sub(date, 1, 4)) 
+
+head(violence_trimmed)
+```
+
+This dataset is really cool and I regret chopping out this much data. I am sure someone particularly motivated could do some really cool stuff with all the data this thing has. If you haven't looked more closely at it yet, do so!
+
+
+## Distraction #1: Mapping Data
+Because we are taking so long to get to our final data, and because we now have a hyper cool dataset with latitude and longitude, we are going to make cool maps! Hooray!  
+
+One thing about this is, as a tangent, I will not be going into extreme detail about this section. 
+
+Here, we will make an ultra-cool [layered](https://rstudio.github.io/leaflet/showhide.html) map, with a layer per year of data, showing the location of the reports of gun violence. 
+
+```{r marked_map}
+#the cool library for making maps
+library(leaflet)
+
+violence_map <- na.omit(violence_trimmed)
+
+markermap <- leaflet(violence_map) %>%
+  addTiles() %>%
+  addAwesomeMarkers(~{as.numeric(unlist(violence_map%>%filter(date==2013)%>%select(longitude)))},
+                    ~{as.numeric(unlist(violence_map%>%filter(date==2013)%>%select(latitude)))}, 
+                    icon=awesomeIcons(
+                      icon = 'ios-close',
+                      iconColor = 'black',
+                      library = 'ion',
+                      markerColor = 'red'
+                    )                    )
+
+markermap
+
+```
+
+
+
+You can find more about the leaflet [here](https://rstudio.github.io/leaflet/).  
