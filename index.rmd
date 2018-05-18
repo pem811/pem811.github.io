@@ -36,7 +36,7 @@ Once you have RStudio open, got to File->New Project and create a directory for 
 
 We will load in the CSV for the Kaggle gun violence data first. If you haven't already put the CSV in the project's home directory, do so. 
 
-```{r load_violence}
+```{r load_violence, warning=FALSE, message=FALSE}
 #This library has everything and is fantastic, I've used it for 
 #every R project I've done
 library(tidyverse)
@@ -58,7 +58,7 @@ Also, if you have not already installed a library, go to the packages tab (by de
 Now we will add the [data set on gun laws](https://www.statefirearmlaws.org/table.html) and the [census dataset](https://www2.census.gov/programs-surveys/popest/tables/2010-2017/state/totals/nst-est2017-01.xlsx). The government wasn't kind enough to provide us with a CSV, so we will have to do a slightly different procedure for the .xlsx file they do provide. 
 
 
-```{r load_gunlaws_population}
+```{r load_gunlaws_population, warning=FALSE, message=FALSE}
 #Pulls the data form our CSV and stores it as R's 
 #data structure, a data frame
 gunlaws_full <- read.csv("raw_data.csv")
@@ -84,7 +84,7 @@ If you want more information about reading in weird datafiles, check out [this l
 
 If you look at the website for the [categories](https://www.statefirearmlaws.org/glossary.html), you'll notice that there is no option to download the data. We will have to [scrape](https://www.analyticsvidhya.com/blog/2017/03/beginners-guide-on-web-scraping-in-r-using-rvest-with-hands-on-knowledge/) it. As outlined in that link, we will have to tell R what sort of element it is looking for to collect the data from. If you don't want to use the chrome extension the link talks about, you will have to inspect the element and select the class that that element is part of. You will put that in the argument of html_nodes. This will return a list of matches; you will have to select the one you want. In my case I wanted the first match it found. 
 
-```{r scrape_cats}
+```{r scrape_cats, , warning=FALSE, message=FALSE}
 #the library for scraping
 library(rvest)
 
@@ -180,7 +180,7 @@ One thing about this is, as a tangent, I will not be going into extreme detail a
 
 Here, we will make an ultra-cool [layered](https://rstudio.github.io/leaflet/showhide.html) map, with a layer per year of data, showing the location of the reports of gun violence. 
 
-```{r marked_map}
+```{r marked_map, warning=FALSE, message=FALSE}
 #the cool library for making maps
 library(leaflet)
 
@@ -273,7 +273,7 @@ Now that this data is in the right format, we must join the population and law c
 
 First though, fix up the laws and the population datasets for the final time...
 
-```{r join_up}
+```{r join_up, warning=FALSE, message=FALSE}
 gunlaws_trimmed <- gunlaws_full %>% 
   transform(year = as.character(year)) %>%
   select(state, year, lawtotal) %>%
@@ -359,7 +359,7 @@ combined %>%
 We see it is decreasing slightly.  
 
 However, due to the inconsistancies with the requirements for linear regression listed above, I do not believe that linear regression is the best choice. As far as regression goes, linear was about all that was discussed in class, so I am going to shrug my shoulders and give up on regression. I will though show you what R thinks is the best regression for this data:
-```{r crazyline}
+```{r crazyline, warning=FALSE, message=FALSE}
 combined %>%
   #assign vars
   ggplot(aes(x=lawtotal, y=per_pop)) +
@@ -437,7 +437,7 @@ In the code above, two matricies are produced that are offset (ex. matrix_1 does
 Now that we have a dataframe of differences, we need to run our k-fold cross validation on it. I have arbitrarily picked k=5. 
 
 
-```{r learn_beast}
+```{r learn_beast, warning=FALSE, message=FALSE}
 #end digits of an old phone number
 set.seed(4352)
 
