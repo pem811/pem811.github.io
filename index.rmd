@@ -182,14 +182,19 @@ Here, we will make an ultra-cool [layered](https://rstudio.github.io/leaflet/sho
 #the cool library for making maps
 library(leaflet)
 
+#get rid of entities with NA values
 violence_map <- na.omit(violence_trimmed)
 
+#start map pipeline
 markermap <- leaflet(violence_map) %>%
   addTiles() %>%
+  #get longitute of one year
   addCircleMarkers(~{as.numeric(unlist(violence_map%>%filter(date==2013)%>%select(longitude)))},
+                   #same for latitude
                     ~{as.numeric(unlist(violence_map%>%filter(date==2013)%>%select(latitude)))}, 
                     radius = 2, 
                     color = 'red',
+                   #assign this layer an identifier
                     group="2013")%>%
   addCircleMarkers(~{as.numeric(unlist(violence_map%>%filter(date==2014)%>%select(longitude)))},
                     ~{as.numeric(unlist(violence_map%>%filter(date==2014)%>%select(latitude)))}, 
@@ -217,9 +222,11 @@ markermap <- leaflet(violence_map) %>%
                     color = 'black',
                     group="2018") %>%
   addLayersControl(
+    #gather all the layers togeather. 
     overlayGroups = c("2013", "2014", "2015", "2016", "2017", "2018"),
     options = layersControlOptions(collapsed = FALSE)
   ) %>% 
+  #start with only the 2013 layer showing. 
   hideGroup("2014") %>%
   hideGroup("2015") %>%
   hideGroup("2016") %>%
@@ -234,7 +241,7 @@ I know that this probably isn't the most efficient way to write it, but it works
 
 The map for 2013 is relativly tame. There are a lot of dots, especially in urban areas, but it was about what I expected. However, when you turn on the filter for any other year, the map just exploads. It blew my mind how many firearm-related incidents were recorded in this dataset. Even for year 2018, which isn't done yet, has a ton of datapoints. It is cool to zoom to your hometown or an urban center and turn the filters on one by one and see how much of this is going on. As I alluded to in the last paragraph, as flippant as I may be in the introduction paragraphs, this is a really serious issue that needs to be approached with great thought, but more importaintly, action to go with it.  
 
-Relating to this project, it makes me wonder if a lot of data is missing for 2013. The Kaggle site reports that this data has "ecorded gun violence incidents in the US between January 2013 and March 2018, inclusive," but the organization it got its data form [only has maps since 2014](http://www.gunviolencearchive.org/charts-and-maps) and [this questionable site](https://gun-control.procon.org/view.resource.php?resourceID=006094) shows no dramatic increase between 2013 and 2014. Therefore, I will only use 2014-2107, the complete years, for analysis. 
+Relating to this project, it makes me wonder if a lot of data is missing for 2013. The Kaggle site reports that this data has "recorded gun violence incidents in the US between January 2013 and March 2018, inclusive," but the organization it got its data form [only has maps since 2014](http://www.gunviolencearchive.org/charts-and-maps) and [this questionable site](https://gun-control.procon.org/view.resource.php?resourceID=006094) shows no dramatic increase between 2013 and 2014. Therefore, I will only use 2014-2107, the complete years, for analysis. 
 
 You can find more about the leaflet [here](https://rstudio.github.io/leaflet/).  
 
@@ -242,7 +249,7 @@ You can find more about the leaflet [here](https://rstudio.github.io/leaflet/).
 ## Distraction #2: ML!!!!
 [coming soon]
 
-#
+## 
 
 
 
