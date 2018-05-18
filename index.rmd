@@ -230,7 +230,7 @@ markermap
 
 ```
 
-
+I know that this
 
 You can find more about the leaflet [here](https://rstudio.github.io/leaflet/).  
 
