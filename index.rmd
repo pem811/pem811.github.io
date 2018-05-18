@@ -175,7 +175,7 @@ This dataset is really cool and I regret chopping out this much data. I am sure 
 
 Finally, you'll notice that the cats_full dataset has two attributes in one column. We need to split this. 
 ```{r catsplit}
-extract(cats_full, 'Category/Subcategory', into = c("category", "subcategory"), '(.+)([A-Z].+)' )
+head(extract(cats_full, 'Category/Subcategory', into = c("category", "subcategory"), '(.+)([A-Z].+)' ))
 
 ```
 
