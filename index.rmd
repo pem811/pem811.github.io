@@ -12,6 +12,8 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Thanks to my Data Science Professor Hector Corida Bravo and his [notes](http://www.hcbravo.org/IntroDataSci/bookdown-notes/). These helped me immensily for this project. 
 
+Also, please forgive my creative spelling. I grew up with spellcheck, and RStudio is running slow enough _without_ an extra pugin running. 
+
 ##Introduction
 
 A popular source of argument among friends, enemies, frenemies, and family members (which could be in any of the previous categories) is the state of gun ownership and gun violence in the United States today. I know I have (cordially of course) discussed this issue a fair bit, especially after the Vegas and Parkland shootings. A common train of disagreement that tends to come from these conversations is the issue of regulation. Some people associated with a particular political leaning argue that more regulation leads to fewer guns which leads to less gun violence. Other people with the opposite political inclination argue that the regulations would only be followed by people who wouldn't be committing gun crimes anyway, and the regulations would just give wrongdoers more incentive to do wrong without the fear of an armed bystander. However, rather than presenting unbiased information to the public, news sources have decided to join one side of the argument or the other and sensationalize the issues to make more money. On the regulation-is-good side of the argument (henceforth referred to as pro-regulation), there is [this article](https://www.theatlantic.com/politics/archive/2015/08/the-states-with-the-most-gun-laws-see-the-fewest-gun-related-deaths/448044/) and [this more scholarly article from Stanford](https://news.stanford.edu/2017/12/07/new-study-analyzes-recent-gun-violence-research/). On the other, regulation-is-bad side of the argument (henceforth the anti-regulation stance) is [this article](http://insider.foxnews.com/2018/03/28/chicago-murder-rate-sky-high-despite-strict-gun-control-laws). Because, as mentioned before, news is sensationalist and we can't believe anything they say, we will do the data ourselves. We will be getting our information on gun crime from [this Kaggle data set](https://www.kaggle.com/jameslko/gun-violence-data) and cross referencing it with [this data set on gun laws](https://www.statefirearmlaws.org/table.html). We will play with weights based on issues that matter to us using [this supporting table](https://www.statefirearmlaws.org/glossary.html). Finally, we will adjust our gun crime rates for population using a [dataset](https://www.census.gov/data/datasets/2017/demo/popest/state-total.html) from the census bureau. After we store this data in R and make it pretty and clean, we will visualize it with multiple charts, perform some regression work, and even use ML to predict future gun violence rates. Of course, I don't know where this data came from exactly, it could come from people who are as bad as the news sources. Also, we must understand that there are several factors at work in an issue like this one, and just because a correlation was found doesn't mean there is causation.   
@@ -248,8 +250,7 @@ Relating to this project, it makes me wonder if a lot of data is missing for 201
 You can find more about the leaflet [here](https://rstudio.github.io/leaflet/).  
 
 
-## Distraction #2: ML!!!!
-[coming soon]
+
 
 ## Analysis
 
@@ -374,6 +375,190 @@ combined %>%
 See how this line is all wavy? That relationship is not very linear. 
 
 
+## Distraction #2: ML!!!!
+Again, since this is a bit of a tangent, I will not be as explicit about my process as I was before. Here, we will attempt to train a decision tree and a random forest to predict whether gun violence will go up or down. A [decision tree](http://www.cs.princeton.edu/courses/archive/spr07/cos424/papers/mitchell-dectrees.pdf) branches based on the value of a parameter with certain thesholds that are decided by iterations of training data. A [random forest](https://www.stat.berkeley.edu/~breiman/RandomForests/cc_home.htm) is multiple decision trees trained on random subsets of a dataset. To get a more accurate picture of this method's true performance, we will perform [k-fold cross validation](https://www.openml.org/a/estimation-procedures/1). This will train multiple trees and RFs and average the results. 
+
+First, we will take the combined dataset form above and try to manipulate it into a form more useful for k-fold cross validation. For the reasons discussed above, we only have the years 2014-2017 to work with. This means 2017 will be our test data and we will only have the two intervals from 2014-2015 and 2015-2016 to train on. This will not be very effective, but it will at least show you the general process for doing your own example with better data. It will be interesting to see how relativly terribly the RF and its extra work will be compared to the decision tree. 
+```{r imitate_outcome}
+#get the results for the 2016-2017 differences
+#this will be used as tests for how well the predictor learned the other two gaps.
+outcome_df <- combined %>%
+  #pick the last gap.
+  filter(date %in% c("2016", "2017")) %>%
+  select(state, date, per_pop) %>%
+  #create atributes for per_pop for each year
+  spread(date, per_pop) %>%
+  #find the difference in pop
+  mutate(diff = `2017` - `2016`) %>%
+  #get a binary difference
+  mutate(Direction = ifelse(diff>0, "up", "down")) %>%
+  select(state, Direction)
+head(outcome_df)
+
+predictor_df <- combined %>%
+  #get the dates before 2016
+  filter(date <= 2016) %>%
+  select(date, state, per_pop) %>%
+  spread(date, per_pop)
+head(predictor_df)
+#create offset matrix on left
+matrix_1 <- predictor_df %>%
+  select(-state) %>%
+  as.matrix() %>%
+  .[,-1]
+
+#create offset matrix on right
+matrix_2 <- predictor_df %>%
+  select(-state) %>%
+  as.matrix() %>%
+  .[,-ncol(.)]
+
+#get differences 
+diff_df <- (matrix_1 - matrix_2) %>%
+  magrittr::set_colnames(NULL) %>%
+  as_data_frame() %>%
+  mutate(state = predictor_df$state)
+
+#put the 2016-2017 outcomes back in
+final_df <- diff_df %>%
+  inner_join(outcome_df %>% select(state, Direction), by="state") %>%
+  mutate(Direction=factor(Direction, levels=c("down", "up")))
+
+head(final_df)
+
+
+```
+
+In the code above, two matricies are produced that are offset (ex. matrix_1 does not include the first quarter). This way, when one is suptracted from the other, a matrix of differences in affordability will be produced. This is then joined back with the states and true directions from the 2016-2017 data, which will be used to test the models' training against.   
+
+Now that we have a dataframe of differences, we need to run our k-fold cross validation on it. I have arbitrarily picked k=5. 
+
+
+```{r learn_beast}
+#end digits of an old phone number
+set.seed(4352)
+
+
+#for the createFolds tree and RF Functions, along with 
+#predictor 
+library(randomForest)
+library(caret)
+library(ROCR)
+library(tree)
+
+
+# create the cross-validation partition, k = # of folds
+result_df <- createFolds(final_df$Direction, k=5) %>%
+  # fit models and gather results. This will run 5 times, one for each fold
+  purrr::imap(function(test_indices, fold_number) {
+    # split into train and test for the fold
+    train_df <- final_df %>%
+      select(-state) %>%
+      slice(-test_indices)
+    
+    test_df <- final_df %>%
+      select(-state) %>%
+      slice(test_indices)
+  
+    # fit the two models
+    rf <- randomForest(Direction~., data=train_df)
+    tr <- tree(Direction~., data=train_df)
+    
+    
+    # gather results
+    test_df %>%
+      select(observed_label = Direction) %>%
+      mutate(fold=fold_number) %>%
+      mutate(prob_positive_rf = predict(rf, newdata=test_df, type="prob")[,"up"]) %>%
+      # add predicted labels for rf using a 0.52 probability cutoff 
+      mutate(predicted_label_rf = ifelse(prob_positive_rf > 0.52, "up", "down")) %>%
+      #WHY CAN'T THEY STANDARDIZE THIS?
+      mutate(prob_positive_tr = predict(tr, newdata=test_df)[,"up"]) %>%
+      # add predicted labels for tr using a 0.5 probability cutoff 
+      mutate(predicted_label_tr = ifelse(prob_positive_tr > 0.5, "up", "down")) 
+}) %>%
+  # combine the five result data frames into one
+  purrr::reduce(bind_rows)
+head(result_df)
+```
+
+Here we have caluclated the predictions for both the tree and the RF, one for each in each of the 5 folds. Now, we need to analyse this data somehow. 
+
+
+```{r plot error graphs}
+error_rates <- result_df %>%
+  #calculate error
+  mutate(error_rf = observed_label != predicted_label_rf,
+         error_tr = observed_label != predicted_label_tr) %>%
+  #gather and take a mean (true(is error) = 1, false = 0)
+  group_by(fold)%>%
+  summarize(rf = mean(error_rf), tr = mean(error_tr)) %>%
+  tidyr::gather(model, error, -fold)
+
+dotplot(error~model, data=error_rates, ylab="Mean Prediction Error")
+
+error_rates  %>%
+  #make a regression 
+  lm(error~model, data=.) %>%
+  #get data on it
+  broom::tidy()
+
+```
+
+```{r hard_ROCs}
+# create a list of true observed labels 
+labels <- split(result_df$observed_label, result_df$fold)
+
+# now create a list of predictions for the RF and pass it to the ROCR::prediction function
+predictions_rf <- split(result_df$prob_positive_rf, result_df$fold) %>% prediction(labels)
+
+
+# do the same for the tree
+predictions_tr <- split(result_df$prob_positive_tr, result_df$fold) %>% prediction(labels)
+
+# compute average AUC for the RF
+mean_auc_rf <- predictions_rf %>%
+  performance(measure="auc") %>%
+  # I know, this line is ugly, but that's how it is
+  slot("y.values") %>% unlist() %>% 
+  mean()
+
+# compute average AUC for the tree
+mean_auc_tr <- predictions_tr %>%
+  performance(measure="auc") %>%
+  slot("y.values") %>% unlist() %>% 
+  mean()
+
+# plot the ROC curve for the RF
+predictions_rf %>%
+  performance(measure="tpr", x.measure="fpr") %>%
+  plot(avg="threshold", col="orange", lwd=2)
+
+# plot the ROC curve for the tree
+predictions_tr %>%
+  performance(measure="tpr", x.measure="fpr") %>%
+  plot(avg="threshold", col="blue", lwd=2, add=TRUE)
+
+# add a legend to the plot
+legend("bottomright",
+       legend=paste(c("rf", "tree"), " AUC:", round(c(mean_auc_rf, mean_auc_tr), digits=3)),
+       col=c("orange", "blue"))
+
+```
+
+
+When looking at the graph, it seems that the random forest is consistantly better than the RF. Indeed, when looking at the output of the regression, we see that the modeltr variable (-.12) is negative. Because the intercept is the average error rate for the random forests, this negative value means that the tree's average error rate is that much better. The p-value for the modeltr entry is almost significant at the ubiuquitous 95% percent confidence level (0.06), but it is not quite small enough to reasonably reject the null hypothesis that a random forest and a tree have the same true average error. 
+
+The [areas under the curve](http://gim.unmc.edu/dxtests/roc3.htm) are less than stellar. If the AUC = .5, that means that the method in question gets as many false positives as true ones: it is just as good as random. These values, both around .6, aren't much better than that. Therefore, these classifiers do not seem to be very effective. This is probably because of the really bad training data, as I mentioned above.  
+
+Again, this is meant as a framework: once you have it you can plug your better data into it pretty easily. 
 
 
 
+## Conclusion
+
+At the end of the day, we were able to reject the null hypothesis that the slope of a linear regression line between the number of firearm regulations and firearm violence was zero. The new slope is slightly negative, which would please the people in the first, pro-regulation camp. However, the data set has many problems with the preconditions for regression that this line is not very trustworty, and we are still in the dark, beholden to the sensationalist media.  
+
+Along the way, we learned how to import data from CSV and .xlsx, tidy the data, represent data on an interactive graph, a little Machine Learning (it I get that done in time), and some linear regression. I know I said that we would use the data from that table we scraped to add weights to gun laws we found especially important, but I ran out of time for that. We did get to scrape that dataset though, which is a good skill to know. 
+
+Thank you, have a good summer, and tell the Professor to give credit to his sources!
