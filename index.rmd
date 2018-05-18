@@ -25,7 +25,7 @@ As a final thought, I wrote the preceding without doing any data analysis, so I 
 
 We will be doing this project in the language R in the RStudio. You can download RStudio [here](https://www.rstudio.com/products/rstudio/download/). If you want to get some more background information on R and RStudio, visit [this page](https://support.rstudio.com/hc/en-us/articles/201141096-Getting-Started-with-R), which has links to various resources for familiarizing yourself with R. I will try to be very thorough here too, however. 
 
-Once you have R installed and have familiarized yourself with it to the extent you desire, sign up for a Kaggle account (I used my burner Google account and it was quite easy) and download the [Kaggle data set](https://www.kaggle.com/jameslko/gun-violence-data) and the [data set on gun laws](https://www.statefirearmlaws.org/table.html) as CSV files (the Kaggle will download as a zipped folder with a CSV in it, you have to choose CSV from a list of options for the other data). You can open these files in Microsoft Excell or another spreadsheet program to inspect the data or look at the raw information in a text editor to get a feel for what R will actually be seeing.  
+Once you have R installed and have familiarized yourself with it to the extent you desire, sign up for a Kaggle account (I used my burner Google account and it was quite easy) and download the [Kaggle data set](https://www.kaggle.com/jameslko/gun-violence-data) and the [data set on gun laws](https://www.statefirearmlaws.org/table.html) as CSV files. The Kaggle will download as a zipped folder with a CSV in it, you have to choose CSV from a list of options for the other data. The gun laws will default to only 2017, use the tools to the left to select years 2013-2017, then click the 'CSV' button. Click [on this link to download the census dataset](https://www2.census.gov/programs-surveys/popest/tables/2010-2017/state/totals/nst-est2017-01.xlsx). You can open these files in Microsoft Excell or another spreadsheet program to inspect the data or look at the raw CSVs in a text editor to get a feel for what R will actually be seeing.  
 
 Once you have RStudio open, got to File->New Project and create a directory for this project. This is what I will call the project's home directory, and all associated files for the project should be put in this folder. 
 
@@ -162,7 +162,7 @@ Also, the violence_full dataset has more attributes than we need, and the date a
 
 violence_trimmed <- violence_full %>%
   #select the 4 attributes we want
-  select(date, state, n_killed, n_injured, longitude, latitude) %>%
+  select(date, state, longitude, latitude) %>%
   mutate(date = str_sub(date, 1, 4)) 
 
 head(violence_trimmed)
@@ -233,15 +233,17 @@ markermap <- leaflet(violence_map) %>%
   hideGroup("2017") %>%
   hideGroup("2018") 
 
+
+#show it!
 markermap
 
 ```
 
 I know that this probably isn't the most efficient way to write it, but it works...barely. This map is really slow. I recommend when manipulating it you turn off all the layers, turning them back on when the view is where you would like it to be. Usually one would add labels to the data, but it is slow enough as it is I'm not going to push it. Seriously, when trying to make this, I had to restart RStudio about 10 times as I made it less and less fancy (I started with awesome markers, labels, and the like). It just goes to show how big this dataset is.  
 
-The map for 2013 is relativly tame. There are a lot of dots, especially in urban areas, but it was about what I expected. However, when you turn on the filter for any other year, the map just exploads. It blew my mind how many firearm-related incidents were recorded in this dataset. Even for year 2018, which isn't done yet, has a ton of datapoints. It is cool to zoom to your hometown or an urban center and turn the filters on one by one and see how much of this is going on. As I alluded to in the last paragraph, as flippant as I may be in the introduction paragraphs, this is a really serious issue that needs to be approached with great thought, but more importaintly, action to go with it.  
+The map for 2013 is relativly tame. There are a lot of dots, especially in urban areas, and it was less than what I expected. However, when you turn on the filter for any other year, the map just exploads. It blew my mind how many firearm-related incidents were recorded in this dataset. Even for year 2018, which isn't done yet, has a ton of datapoints. It is cool to zoom to your hometown or an urban center and turn the filters on one by one and see how much of this is going on. As I alluded to in the last paragraph, as flippant as I may be in the introduction paragraphs, this is a really serious issue that needs to be approached with great thought, but more importaintly, action to go with it.  
 
-Relating to this project, it makes me wonder if a lot of data is missing for 2013. The Kaggle site reports that this data has "recorded gun violence incidents in the US between January 2013 and March 2018, inclusive," but the organization it got its data form [only has maps since 2014](http://www.gunviolencearchive.org/charts-and-maps) and [this questionable site](https://gun-control.procon.org/view.resource.php?resourceID=006094) shows no dramatic increase between 2013 and 2014. Therefore, I will only use 2014-2107, the complete years, for analysis. 
+Relating to this project, it makes me wonder if a lot of data is missing for 2013. The Kaggle site reports that this data has "all recorded gun violence incidents in the US between January 2013 and March 2018, inclusive," but the organization it got its data form [only has maps since 2014](http://www.gunviolencearchive.org/charts-and-maps) and [this questionable site](https://gun-control.procon.org/view.resource.php?resourceID=006094) shows no dramatic increase between 2013 and 2014. Therefore, I will only use 2014-2107, the complete years, for analysis. 
 
 You can find more about the leaflet [here](https://rstudio.github.io/leaflet/).  
 
@@ -249,12 +251,21 @@ You can find more about the leaflet [here](https://rstudio.github.io/leaflet/).
 ## Distraction #2: ML!!!!
 [coming soon]
 
-## 
+## Analysis
 
+Here, we are going to finally answer the question of whether or not regulation has an impact on gun violence (in our somewhat flawed, generalized way). We are, unfortunatly, going to have to modify some data sets some more. gunlaws_full already has a total_laws column, so we don't have to do any more processing on that beyond slicing out all of the middle rows. Population is already ready from the work above. However, our incident database is not finished. It is a list of incidents, we want it to become a list of all of the incidents that happen in a certain state in a certain year. A [very interesting but seemingly still accurate website](https://www.miskatonic.org/2012/09/24/counting-and-aggregating-r/) has some good tips for how to aggregate data like this. 
 
+```{r summerize_violence}
+#library for combinations, etc. 
+library(plyr)
 
+#count separate occurences of each pair of date and state
+violence_summ <- violence_trimmed %>%
+  count(c("date", "state"))
+  
+violence_summ <- violence_summ %>% filter(2014 <= date & date <= 2017)
+head(violence_summ)
+```
+I should have mentioned before what the c() function does! It takes its arguments and makes a vector out of them. You saw this before when I was renaming the columns in the population sheet and when grouping the layers for the map.
 
-
-
-
-
+Now that 
