@@ -175,7 +175,7 @@ violence_full %&gt;% select(1:5)%&gt;%head()</code></pre>
 ## 6                6000 block of South Owasso</code></pre>
 <p>As a note, all code will be commented with a max of two lines, and if I want to expound on my notes I will do it after the code block.</p>
 <p>For example, the last line is what is called a pipeline. The ‘%&gt;%’ operator takes the result of the thing in front of it and passes it as the first argument of the thing behind it. These pipes usually start with a dataset, in this case violence_full. Select picks columns, and this range means columns 1-5 inclusive. Head selects the first few rows of a dataset. If a line does nothing but create a value or mention a value without storing it, that value is printed.</p>
-<p>Now we will add the <a href="https://www.statefirearmlaws.org/table.html">data set on gun laws</a> and the <a href="https://www2.census.gov/programs-surveys/popest/tables/2010-2017/state/totals/nst-est2017-01.xlsx">census dataset</a>. The government wasn’t kind enough to provide us with a CSV, so we will have to do a slightly different proceidure for the .xlsx file they do provide.</p>
+<p>Now we will add the <a href="https://www.statefirearmlaws.org/table.html">data set on gun laws</a> and the <a href="https://www2.census.gov/programs-surveys/popest/tables/2010-2017/state/totals/nst-est2017-01.xlsx">census dataset</a>. The government wasn’t kind enough to provide us with a CSV, so we will have to do a slightly different procedure for the .xlsx file they do provide.</p>
 <pre class="r"><code>#Pulls the data form our CSV and stores it as R's 
 #data structure, a data frame
 gunlaws_full &lt;- read.csv(&quot;raw_data.csv&quot;)
@@ -214,7 +214,116 @@ pops_full %&gt;% select(1:5)%&gt;%head()</code></pre>
 ## 4 308745538      308758105                          309338421 311644280
 ## 5  55317240       55318350                           55388349  55642659
 ## 6  66927001       66929794                           66973360  67141501</code></pre>
-<p>You will note that the datafram for pops_full has a lot of junk in it. If you open it and in Excell and compare it to the</p>
+<p>You will note that the dataframe for pops_full has a lot of junk in it. If you open it and the CSV for gun laws in Excell and compare them, you will notice that the .xlsx contains a lot more data than the gun laws CSV, and that most of this data will not be needed. We’ll deal with that in a bit.</p>
+<p>If you want more information about reading in weird datafiles, check out <a href="https://www.statmethods.net/input/importingdata.html">this link</a>.</p>
+<p>If you look at the website for the <a href="https://www.statefirearmlaws.org/glossary.html">categories</a>, you’ll notice that there is no option to download the data. We will have to <a href="https://www.analyticsvidhya.com/blog/2017/03/beginners-guide-on-web-scraping-in-r-using-rvest-with-hands-on-knowledge/">scrape</a> it. As outlined in that link, we will have to tell R what sort of element it is looking for to collect the data from. If you don’t want to use the chrome extension the link talks about, you will have to inspect the element and select the class that that element is part of. You will put that in the argument of html_nodes. This will return a list of matches; you will have to select the one you want. In my case I wanted the first match it found.</p>
+<pre class="r"><code>#the library for scraping
+library(rvest)</code></pre>
+<pre><code>## Loading required package: xml2</code></pre>
+<pre><code>## 
+## Attaching package: 'rvest'</code></pre>
+<pre><code>## The following object is masked from 'package:purrr':
+## 
+##     pluck</code></pre>
+<pre><code>## The following object is masked from 'package:readr':
+## 
+##     guess_encoding</code></pre>
+<pre class="r"><code>#read in webpage. 
+#usually a web address
+webpage &lt;- read_html(&quot;State Firearm Laws - Use the Database Glossary Search Tool.html&quot;)
+
+cats_full &lt;- webpage %&gt;%
+  html_nodes(&quot;.table&quot;) %&gt;%
+  .[[1]] %&gt;%
+  html_table(fill = TRUE)
+
+head(cats_full)</code></pre>
+<pre><code>##                  Code
+## 1 age18longgunpossess
+## 2    age18longgunsale
+## 3 age21handgunpossess
+## 4    age21handgunsale
+## 5 age21longgunpossess
+## 6    age21longgunsale
+##                                                                                       Definition
+## 1                                                        No possession of long guns until age 18
+## 2 Purchase of long guns from licensed dealers and private sellers restricted to age 18 and older
+## 3                                                         No possession of handguns until age 21
+## 4  Purchase of handguns from licensed dealers and private sellers restricted to age 21 and older
+## 5                                                        No possession of long guns until age 21
+## 6 Purchase of long guns from licensed dealers and private sellers restricted to age 21 and older
+##                     Category/Subcategory
+## 1 Possession regulationsAge restrictions
+## 2      Buyer regulationsAge restrictions
+## 3 Possession regulationsAge restrictions
+## 4      Buyer regulationsAge restrictions
+## 5 Possession regulationsAge restrictions
+## 6      Buyer regulationsAge restrictions</code></pre>
+<p>One snag I ran into here is that the page is dynamically loaded, so it only worked when I right clicked on the page and selected “Save page as…” and put the result in my project’s home direcory.</p>
+</div>
+<div id="making-data-pretty" class="section level2">
+<h2>Making Data Pretty</h2>
+<p>As mentioned before, there is a lot of junk in the pops_full dataset. We only want the data and done of the fluff. I’ll remind you what this dataset looks like:</p>
+<pre class="r"><code>head(pops_full)</code></pre>
+<pre><code>##                                  table.with.row.headers.in.column.A.and.column.headers.in.rows.3.through.4...leading.dots.indicate.sub.parts.
+## 1 Table 1. Annual Estimates of the Resident Population for the United States, Regions, States, and Puerto Rico: April 1, 2010 to July 1, 2017
+## 2                                                                                                                             Geographic Area
+## 3                                                                                                                                        &lt;NA&gt;
+## 4                                                                                                                               United States
+## 5                                                                                                                                   Northeast
+## 6                                                                                                                                     Midwest
+##         NA.          NA..1                              NA..2     NA..3
+## 1      &lt;NA&gt;           &lt;NA&gt;                               &lt;NA&gt;        NA
+## 2     40269           &lt;NA&gt; Population Estimate (as of July 1)        NA
+## 3    Census Estimates Base                               2010      2011
+## 4 308745538      308758105                          309338421 311644280
+## 5  55317240       55318350                           55388349  55642659
+## 6  66927001       66929794                           66973360  67141501
+##       NA..4     NA..5     NA..6     NA..7     NA..8     NA..9
+## 1        NA        NA        NA        NA        NA        NA
+## 2        NA        NA        NA        NA        NA        NA
+## 3      2012      2013      2014      2015      2016      2017
+## 4 313993272 316234505 318622525 321039839 323405935 325719178
+## 5  55860261  56047732  56203078  56296628  56359360  56470581
+## 6  67318295  67534451  67720120  67839187  67978168  68179351</code></pre>
+<p>You’ll notice that we only want a few of the columns (called atributes): the ones with the state names and the dates. You will also notice that there are some extra rows (called entities). The following code trims them down.</p>
+<pre class="r"><code>#library for text manipulation
+library(stringr)
+
+#the arrow is a storage operator
+pops_trimmed &lt;- pops_full %&gt;%
+  #removes attributes 2 and 3
+  select(-(2:3)) %&gt;%
+  #removes first 8 entities
+  slice(-(1:8)) %&gt;%
+  #removes last 6 entities
+  slice(-(52:58) ) %&gt;%
+  #change the column names
+  #the ticks let us use code we wouldn't usually put in a pipeline
+  `colnames&lt;-`(c(&quot;State&quot;, &quot;2010&quot;, &quot;2011&quot;, &quot;2012&quot;, &quot;2013&quot;, 
+                 &quot;2014&quot;, &quot;2015&quot;, &quot;2016&quot;, &quot;2017&quot;)) %&gt;%
+  mutate(State = str_sub(State, 2, 25)) %&gt;%
+  transform(`2010` = as.double(as.character(`2010`)))
+  
+  
+
+head(pops_trimmed)</code></pre>
+<pre><code>##        State    X2010    X2011    X2012    X2013    X2014    X2015
+## 1    Alabama  4785579  4798649  4813946  4827660  4840037  4850858
+## 2     Alaska   714015   722259   730825   736760   736759   737979
+## 3    Arizona  6407002  6465488  6544211  6616124  6706435  6802262
+## 4   Arkansas  2921737  2938640  2949208  2956780  2964800  2975626
+## 5 California 37327690 37672654 38019006 38347383 38701278 39032444
+## 6   Colorado  5048029  5116411  5186330  5262556  5342311  5440445
+##      X2016    X2017
+## 1  4860545  4874747
+## 2   741522   739795
+## 3  6908642  7016270
+## 4  2988231  3004279
+## 5 39296476 39536653
+## 6  5530105  5607154</code></pre>
+<p>You will notice that I changed the state names to remove the periods, changed the attribute names, and changed the 2010 attribute to neumaric (helpful later, when we want them to be numbers: it was treating it as text). For more information on string manipulation, check <a href="http://r4ds.had.co.nz/strings.html">this link</a>.</p>
+<p>However, we’re not done. We want to be able to join the violence dataset to this based on year and state eventually. This dataset as it stands is not very condusive to this, it would be better if there was a separate attribute for each state in each year. This also plays into the idea of <a href="https://vita.had.co.nz/papers/tidy-data.pdf">tidy data</a>(incidentally, this seems to be the paper Professor Bravo used for his class notes–might want to cite this Professor).</p>
 </div>
 
 
