@@ -253,19 +253,127 @@ You can find more about the leaflet [here](https://rstudio.github.io/leaflet/).
 
 ## Analysis
 
-Here, we are going to finally answer the question of whether or not regulation has an impact on gun violence (in our somewhat flawed, generalized way). We are, unfortunatly, going to have to modify some data sets some more. gunlaws_full already has a total_laws column, so we don't have to do any more processing on that beyond slicing out all of the middle rows. Population is already ready from the work above. However, our incident database is not finished. It is a list of incidents, we want it to become a list of all of the incidents that happen in a certain state in a certain year. A [very interesting but seemingly still accurate website](https://www.miskatonic.org/2012/09/24/counting-and-aggregating-r/) has some good tips for how to aggregate data like this. 
+Here, we are going to finally answer the question of whether or not regulation has an impact on gun violence (in our somewhat flawed, generalized way). We are, unfortunatly, going to have to modify some data sets some more. gunlaws_full already has a total_laws column, so we don't have to do any more processing on that beyond slicing out all of the middle rows. Population is already mostly ready from the work above. Turns out, though, that we have to remove DC from population because the gun laws dataset doesn't include DC and remove all years except 2014-2017 inclusive becuase of the violence dataset.   
+
+However, our incident database is not finished. It is a list of incidents, we want it to become a list of all of the incidents that happen in a certain state in a certain year. [This website](https://dplyr.tidyverse.org/reference/tally.html) demonstrates how to do various aggegations and tallies. A [very interesting but seemingly still accurate website](https://www.miskatonic.org/2012/09/24/counting-and-aggregating-r/) has some good tips for how to aggregate data like this for an old library that has been updated, but I like the name of the site so I left it in anyways. 
 
 ```{r summerize_violence}
-#library for combinations, etc. 
-library(plyr)
-
 #count separate occurences of each pair of date and state
 violence_summ <- violence_trimmed %>%
-  count(c("date", "state"))
+  count(date, state)
   
-violence_summ <- violence_summ %>% filter(2014 <= date & date <= 2017)
+#select only the good data, unfortunatly have to remove DC...
+violence_summ <- violence_summ %>% filter(2014 <= date & date <= 2017 & state != "District of Columbia")
 head(violence_summ)
 ```
 I should have mentioned before what the c() function does! It takes its arguments and makes a vector out of them. You saw this before when I was renaming the columns in the population sheet and when grouping the layers for the map.
 
-Now that 
+Now that this data is in the right format, we must join the population and law counts to it. A join takes two datasets and combines them on rows that are the same. In this example, each dataset has an entity with a unique date and state. Because all of our datasets will have rows that correspond exactly, it is not neccessary to pick a specific type of join, but the types are discussed in detail [here](https://www.w3schools.com/sql/sql_join.asp).
+
+First though, fix up the laws and the population datasets for the final time...
+
+```{r join_up}
+gunlaws_trimmed <- gunlaws_full %>% 
+  transform(year = as.character(year)) %>%
+  select(state, year, lawtotal) %>%
+  filter(2014 <= year & year <= 2017 & state != "District of Columbia") 
+
+pops_tidy_trimmed <- pops_tidy %>%
+  filter(2014 <= year & year <= 2017 & State != "District of Columbia")
+
+combined <- violence_summ %>%
+  #join on two conditions
+  left_join(gunlaws_trimmed, by = c("state" = "state", "date" = "year")) %>%
+  #join again on two conditions
+  left_join(pops_tidy_trimmed, by = c("state" = "State", "date" = "year")) %>%
+  #get a incidents_per_person number
+  mutate(per_pop = n/population)
+
+head(combined)
+```
+
+Now that we finally have a good dataset, we need to make sure the [preconditions to linear regression](http://www.hcbravo.org/IntroDataSci/bookdown-notes/linear-regression.html#issues-with-linear-regression) are met. We will call lawtotal the independant variable as its increase is argued by some to decrease firearm incidents, we will call it the independant variable and the per-population incidence rate the dependant variable. 
+
+Let us look at our graph first (using ggplot: here is some [mind-numbing information on it](https://cran.r-project.org/web/packages/ggplot2/ggplot2.pdf)):
+```{r graph_prelim} 
+combined %>%
+  #assign vars
+  ggplot(aes(x=lawtotal, y=per_pop)) +
+    #make labels
+    labs(x = "Number of Regulation Laws", y = "Incidents per Capita", "title" = "Fire Arm Regulation vs. Firearm Incidents") +
+    #make a dotplot
+    geom_point()
+
+```
+
+This data seems like it might slightly decrease with the number of regulation laws, but this is not very clear cut. One way to try and make data more linear is to take the log of the dependant variable. We will try that. 
+
+```{r graph_log_dependent} 
+combined %>%
+  #assign vars
+  ggplot(aes(x=lawtotal, y=log(per_pop))) +
+    #make labels
+    labs(x = "Number of Regulation Laws", y = "Log Incidents per Capita", "title" = "Fire Arm Regulation vs. Log Firearm Incidents") +
+    #make a dotplot
+    geom_point()
+
+```
+This has centered the data in the graph, but not made it much better. In fact, I would say that it has been made worse. 
+
+
+Reverting back to the original, not-log'd data, we will generate some more graphs to try and see if these conditions are met. First, we have to make a [regression model](https://www.rdocumentation.org/packages/stats/versions/3.5.0/topics/lm) and then feed it into the [plot function](https://stat.ethz.ch/R-manual/R-devel/library/stats/html/plot.lm.html).
+
+```{r regression_testfit}
+#lm's formula is response[dependant]~terms[indepenent]
+fit = lm(per_pop~lawtotal, data=combined)
+
+#the which part selects which plots to show
+plot(fit, which=1:2)
+```
+
+Also, we can use some functions from the [broom library](https://cran.r-project.org/web/packages/broom/vignettes/broom.html) to get some stats on the regression. 
+
+```{r brooming}
+library(broom)
+
+glance(fit)
+tidy(fit)
+```
+
+
+After looking at this output and compairing it to the expectations of a good fit set out [here](https://people.duke.edu/~rnau/411regou.htm), I would say that this is not a good regression line. The residuals in the "Residuals vs. Fitted" graph are all clustered to one side; with a good regression line, there would be no decernable pattern. The Normal Q-Q plot seems to show a curve: a good regression will produce normally distributed resids, which will appear as a horizontal line on that plot. The $R^2$ value is the percentage of the dependent variables that can be explained by the dependent. In this case, it is about 3%, which is very low. A good regression would have an $R^2$ value of about 70%. The p-value of the slope is reasonably small (about .017), but I am still wary due to the other factors mentioned. 
+
+Even though this line is not very good, we can still plot it. The dark line is the regression itself, the light blue around it is a 95% confidence interval for the line. 
+```{r print_bad_regression}
+combined %>%
+  #assign vars
+  ggplot(aes(x=lawtotal, y=per_pop)) +
+    #make labels
+    labs(x = "Number of Regulation Laws", y = "Incidents per Capita", "title" = "Fire Arm Regulation vs. Firearm Incidents") +
+    #make a dotplot
+    geom_point()+
+    #add prediction
+    stat_smooth(method="lm")
+```
+We see it is decreasing slightly.  
+
+However, due to the inconsistancies with the requirements for linear regression listed above, I do not believe that linear regression is the best choice. As far as regression goes, linear was about all that was discussed in class, so I am going to shrug my shoulders and give up on regression. I will though show you what R thinks is the best regression for this data:
+```{r crazyline}
+combined %>%
+  #assign vars
+  ggplot(aes(x=lawtotal, y=per_pop)) +
+    #make labels
+    labs(x = "Number of Regulation Laws", y = "Incidents per Capita", "title" = "Fire Arm Regulation vs. Firearm Incidents") +
+    #make a dotplot
+    geom_point()+
+    #add prediction
+    geom_smooth()
+
+```
+
+See how this line is all wavy? That relationship is not very linear. 
+
+
+
+
+
